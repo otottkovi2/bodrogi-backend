@@ -1,0 +1,11 @@
+services:
+  mongodb:
+    image: mongodb/mongodb-community-server:8.0-ubuntu2204
+    environment:
+      - MONGODB_INITDB_ROOT_USERNAME=root
+      - MONGODB_INITDB_ROOT_PASSWORD=password
+    volumes:
+      - "./data:/data/db"
+    network_mode: "host"
+    ports:
+      - "27017:27017"
