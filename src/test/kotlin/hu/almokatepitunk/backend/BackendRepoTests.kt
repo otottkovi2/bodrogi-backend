@@ -3,6 +3,7 @@ package hu.almokatepitunk.backend
 import hu.almokatepitunk.backend.models.User
 import hu.almokatepitunk.backend.repos.UserRepository
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -14,6 +15,14 @@ class BackendRepoTests {
     @Autowired
     lateinit var repo:UserRepository
 
+    @BeforeEach
+    fun setup() {
+        repo.deleteAll()
+        val user = User("6761cd8062d02b0120dff1ba","admin","gsrnjhdetöinfbóíúdf",
+            "NaCl")
+        repo.save(user)
+    }
+
     @Test
     fun readAllUsers(){
         val users = repo.findAll()
@@ -23,14 +32,16 @@ class BackendRepoTests {
     @Test
     fun readUser(){
         val user = repo.findByUsername("admin")
-        val exampleUser = User("6761cd8062d02b0120dff1ba","admin","gsrnjhdetöinfbóíúdf",
+        assertThat(user).isNotNull
+        val exampleUser = User("admin","gsrnjhdetöinfbóíúdf",
             "NaCl")
         assertThat(user).isEqualTo(exampleUser)
     }
 
     @Test
-    @DirtiesContext
+    @DirtiesContext()
     fun addUser(){
+        repo.deleteAll()
         val user = User("6761cd8062d02b0120dff1ba","admin","gsrnjhdetöinfbóíúdf",
             "NaCl")
         val response = repo.save(user)
@@ -40,11 +51,13 @@ class BackendRepoTests {
     @Test
     @DirtiesContext
     fun deleteUser(){
-        val user = User("6761cd8062d02b0120dff1ba","admin","gsrnjhdetöinfbóíúdf",
+        val user = User("6761cd8062d02b0120dff1ba","admin", "gsrnjhdetöinfbóíúdf",
             "NaCl")
+        repo.save(user)
         repo.delete(user)
         val users = repo.findAll()
         assertThat(users).containsExactlyInAnyOrder()
+        repo.save(user)
     }
 
     @Test
