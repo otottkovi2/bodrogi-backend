@@ -8,6 +8,6 @@ class AdminController {
 
     @GetMapping("/admin")
     fun getAdmin():String{
-        return "admin"
+        return "admin/index.html"
     }
 }

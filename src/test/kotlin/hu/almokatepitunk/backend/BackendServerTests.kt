@@ -19,7 +19,8 @@ class BackendServerTests {
         val result = testRestTemplate.getForEntity<String>("/admin")
         assertThat(result.statusCode).isEqualTo(HttpStatus.OK)
         val body = result.body
-        assertThat(body).startsWith("<")
+        assertThat(body).startsWith("<!DOCTYPE html>")
+        assertThat(body).contains("Admin site")
     }
 
 }
