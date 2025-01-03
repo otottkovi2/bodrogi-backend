@@ -6,10 +6,16 @@ import java.util.Date
 
 @Document("orders")
 data class Order(
-    @Id val id: String,
     val name: String,
     val phone: String,
     val email: String,
     val deadline: Date,
     val description: String
-)
+) {
+    @Id
+    lateinit var id: String
+    constructor(id:String,name:String, phone:String, email:String, deadline: Date,description: String) :
+            this(name, phone, email, deadline, description) {
+                this.id = id
+            }
+}

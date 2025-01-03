@@ -5,6 +5,11 @@ import org.springframework.data.mongodb.core.mapping.Document
 import java.net.URI
 
 @Document("images")
-data class Image(@Id val id: String, val url: URI){
-    constructor(id:String, url: String) : this(id,URI.create(url))
+data class Image(val url: URI){
+    constructor(url: String) : this(URI.create(url))
+    constructor(id:String, url: String) : this(URI.create(url)) {
+        this.id = id
+    }
+    @Id
+    lateinit var id: String
 }
