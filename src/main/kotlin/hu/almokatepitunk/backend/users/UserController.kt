@@ -1,10 +1,8 @@
 package hu.almokatepitunk.backend.users
 
-import hu.almokatepitunk.backend.dtos.UserDto
-import hu.almokatepitunk.backend.services.UserService
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.util.UriComponentsBuilder
 
@@ -15,7 +13,7 @@ class UserController {
     lateinit var userService: UserService
 
     @PostMapping("/api/register")
-    fun register(@RequestBody newUser: UserDto,uriBuilder: UriComponentsBuilder): ResponseEntity<Void> {
+    fun register(@RequestBody newUser: UserDto, uriBuilder: UriComponentsBuilder): ResponseEntity<Void> {
         val userId = try {
             userService.createUser(newUser)
         } catch (e: IllegalArgumentException) {
@@ -48,10 +46,12 @@ class UserController {
     @PutMapping("/api/user/{id}")
     fun updateUser(@PathVariable("id") id: String,userDto: UserDto): ResponseEntity<Void> {
         try {
-            userService.updateUser(userDto)
+            userService.updateUser(id, userDto)
             return ResponseEntity.ok().build()
         } catch (e:IllegalArgumentException) {
             return ResponseEntity.notFound().build()
+        } catch (e:UserService.IdConflictException){
+            return ResponseEntity.badRequest().build()
         } catch (e:Exception) {
             return ResponseEntity.internalServerError().build()
         }
@@ -59,7 +59,7 @@ class UserController {
     }
 
     @DeleteMapping("/api/user")
-    fun deleteUserById(userToDelete:UserDto): ResponseEntity<String> {
+    fun deleteUserById(userToDelete: UserDto): ResponseEntity<String> {
         try {
             val deletedId = userService.deleteUser(userToDelete)
             return ResponseEntity.ok(deletedId)

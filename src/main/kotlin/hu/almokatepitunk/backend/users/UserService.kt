@@ -43,9 +43,11 @@ class UserService{
         return dto
     }
 
-    fun updateUser(userDto: UserDto): UserDto {
+    fun updateUser(idToUpdate: String, userDto: UserDto): UserDto {
+        if(!checkExistingUserById(idToUpdate)) throw IllegalArgumentException("Given id does not exist")
         if(!checkExistingUser(userDto.username)) throw UsernameNotFoundException("Username not found")
         val user = userRepository.findByUsername(userDto.username)!!
+        if(idToUpdate != user.id) throw IdConflictException("Given id does not match the user id")
         val updatedUser = userRepository.save(user)
         val dto = userDto.copy(password = updatedUser.passwordHash)
         return dto
@@ -61,4 +63,10 @@ class UserService{
     private fun checkExistingUser(username:String): Boolean{
         return userRepository.findByUsername(username) != null
     }
+
+    private fun checkExistingUserById(id:String): Boolean{
+        return userRepository.findById(id).isPresent
+    }
+
+    class IdConflictException(message:String): Exception()
 }
