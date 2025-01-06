@@ -1,4 +1,4 @@
-package hu.almokatepitunk.backend.controllers
+package hu.almokatepitunk.backend.users
 
 import hu.almokatepitunk.backend.dtos.UserDto
 import hu.almokatepitunk.backend.services.UserService

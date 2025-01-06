@@ -1,7 +1,7 @@
 package hu.almokatepitunk.backend
 
-import hu.almokatepitunk.backend.models.User
-import hu.almokatepitunk.backend.repos.UserRepository
+import hu.almokatepitunk.backend.users.User
+import hu.almokatepitunk.backend.users.UserRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -13,7 +13,7 @@ import org.springframework.test.annotation.DirtiesContext
 class BackendRepoTests {
 
     @Autowired
-    lateinit var repo:UserRepository
+    lateinit var repo: UserRepository
 
     @BeforeEach
     fun setup() {
@@ -67,8 +67,10 @@ class BackendRepoTests {
             "NaCl")
         val user = repo.save(newUser)
         assertThat(user).isEqualTo(newUser)
-        assertThat(user).isNotEqualTo(User("6761cd8062d02b0120dff1ba","admin",
-            "gsrnjhdetöinfbóíúdf", "NaCl"))
+        assertThat(user).isNotEqualTo(
+            User("6761cd8062d02b0120dff1ba","admin",
+            "gsrnjhdetöinfbóíúdf", "NaCl")
+        )
     }
 
 }

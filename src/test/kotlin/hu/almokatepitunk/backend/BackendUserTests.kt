@@ -1,8 +1,8 @@
 package hu.almokatepitunk.backend
 
-import hu.almokatepitunk.backend.dtos.UserDto
-import hu.almokatepitunk.backend.models.User
-import hu.almokatepitunk.backend.repos.UserRepository
+import hu.almokatepitunk.backend.users.UserDto
+import hu.almokatepitunk.backend.users.User
+import hu.almokatepitunk.backend.users.UserRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test

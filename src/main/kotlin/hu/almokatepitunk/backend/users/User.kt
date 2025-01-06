@@ -1,4 +1,4 @@
-package hu.almokatepitunk.backend.models
+package hu.almokatepitunk.backend.users
 
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
