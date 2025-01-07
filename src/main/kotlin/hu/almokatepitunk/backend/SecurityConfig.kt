@@ -11,10 +11,10 @@ import org.springframework.security.web.SecurityFilterChain
 class SecurityConfig {
 
     @Bean
-    @Order(Ordered.HIGHEST_PRECEDENCE)
+    @Order(Ordered.LOWEST_PRECEDENCE)
     fun baseFilterChain(http: HttpSecurity): SecurityFilterChain {
         with(http) {
-
+            securityMatcher("/index.html")
             authorizeHttpRequests {
                 it.requestMatchers("/index.html").permitAll()
                     .anyRequest().denyAll()

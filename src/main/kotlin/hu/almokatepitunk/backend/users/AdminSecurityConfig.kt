@@ -3,6 +3,7 @@ package hu.almokatepitunk.backend.users
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.core.annotation.Order
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.core.userdetails.UserDetailsService
@@ -22,13 +23,15 @@ class AdminSecurityConfig {
     }
 
     @Bean
+    @Order(1)
     fun adminFilterChain(http: HttpSecurity): SecurityFilterChain {
         with(http) {
-            //TODO: fix multi-file security config
             securityMatcher("/admin/**")
-                .authorizeHttpRequests {
+            authorizeHttpRequests {
                     it.requestMatchers("/admin/**").hasRole("ADMIN")
                 }
+            csrf {it.disable() }
+            cors { it.disable() }
         }
         return http.build()
     }
