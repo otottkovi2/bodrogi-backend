@@ -33,15 +33,14 @@ class BackendUserTests {
     @BeforeEach
     fun setup() {
         userRepository.deleteAll()
-        val user = testUser
-        userRepository.save(user)
+        userRepository.save(testUser)
     }
 
     @Test
     @DirtiesContext
     fun registerNewUser(){
         userRepository.deleteAll()
-        val userToCreate = UserDto("new user","password")
+        val userToCreate = UserDto(testUser.username,testUser.passwordHash)
         val response = testRestTemplate.postForEntity<Void>("/api/register",userToCreate)
         assertThat(response.statusCode).isEqualTo(HttpStatus.CREATED)
         val location = response.headers.location
@@ -66,7 +65,7 @@ class BackendUserTests {
 
     @Test
     fun getUserById(){
-        val response = testRestTemplate.getForEntity<UserDto>("/api/user/677806696c33cb173dbbd598")
+        val response = testRestTemplate.getForEntity<UserDto>("/api/user/${testUser.username}")
         assertThat(response.statusCode).isEqualTo(HttpStatus.OK)
         val dto = response.body
         assertThat(dto).isNotNull()
@@ -83,56 +82,51 @@ class BackendUserTests {
     @Test
     @DirtiesContext
     fun putExistingUser(){
-        var user = testUser.copy(salt="NaCl")
-        val putResponse = testRestTemplate.exchange<Void>("/api/user/${user.id}", HttpMethod.PUT,HttpEntity(user))
+        val userToUpdate = UserDto(testUser.username,"fak")
+        val putResponse = testRestTemplate.exchange<Void>("/api/user/${userToUpdate.username}", HttpMethod.PUT,
+            HttpEntity(userToUpdate))
         assertThat(putResponse.statusCode).isEqualTo(HttpStatus.OK)
 
-        val getResponse = testRestTemplate.getForEntity<UserDto>("/api/user/${user.id}")
+        val getResponse = testRestTemplate.getForEntity<UserDto>("/api/user/${userToUpdate.username}")
         assertThat(getResponse.statusCode).isEqualTo(HttpStatus.OK)
         val dto = getResponse.body
         assertThat(dto).isNotNull()
-        user = userRepository.findByUsername(dto!!.username)!!
-        assertThat(user).isNotEqualTo(testUser)
+        val newUser = userRepository.findByUsername(dto!!.username)
+        assertThat(newUser).isNotEqualTo(testUser)
     }
 
     @Test
     @DirtiesContext
     fun dontPutNonExistingUser(){
-        var user = testUser.copy(salt="NaCl")
-        val putResponse = testRestTemplate.exchange<Void>("/api/user/fak", HttpMethod.PUT,HttpEntity(user))
+        val userToUpdate = UserDto("fak",testUser.passwordHash)
+        val putResponse = testRestTemplate.exchange<Void>("/api/user/fak", HttpMethod.PUT,HttpEntity(userToUpdate))
         assertThat(putResponse.statusCode).isEqualTo(HttpStatus.NOT_FOUND)
-
-        val getResponse = testRestTemplate.getForEntity<UserDto>("/api/user/${user.id}")
-        assertThat(getResponse.statusCode).isEqualTo(HttpStatus.OK)
-        val dto = getResponse.body
-        assertThat(dto).isNotNull()
-        user = userRepository.findByUsername(dto!!.username)!!
-        assertThat(user).isEqualTo(testUser)
     }
 
     @Test
     @DirtiesContext
     fun dontPutUserWithWrongId(){
-        var user = testUser.copy(salt="NaCl")
-        val putResponse = testRestTemplate.exchange<Void>("/api/user/677806696cffff173dbbd598", HttpMethod.PUT,
-            HttpEntity(user))
+        val userToUpdate = UserDto(testUser.username,testUser.passwordHash)
+        val putResponse = testRestTemplate.exchange<Void>(
+            "/api/user/old user", HttpMethod.PUT,
+            HttpEntity(userToUpdate))
         assertThat(putResponse.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
 
-        val getResponse = testRestTemplate.getForEntity<UserDto>("/api/user/${user.id}")
+        val getResponse = testRestTemplate.getForEntity<UserDto>("/api/user/${userToUpdate.username}")
         assertThat(getResponse.statusCode).isEqualTo(HttpStatus.OK)
         val dto = getResponse.body
         assertThat(dto).isNotNull()
-        user = userRepository.findByUsername(dto!!.username)!!
+        val user = userRepository.findByUsername(dto!!.username)!!
         assertThat(user).isEqualTo(testUser)
     }
 
     @Test
     @DirtiesContext
     fun deleteExistingUser(){
-        val response = testRestTemplate.exchange<Void>("/api/user/${testUser.id}", HttpMethod.DELETE)
+        val response = testRestTemplate.exchange<Void>("/api/user/${testUser.username}", HttpMethod.DELETE)
         assertThat(response.statusCode).isEqualTo(HttpStatus.OK)
 
-        val getResponse = testRestTemplate.getForEntity<UserDto>("/api/user/${testUser.id}")
+        val getResponse = testRestTemplate.getForEntity<UserDto>("/api/user/${testUser.username}")
         assertThat(getResponse.statusCode).isEqualTo(HttpStatus.NOT_FOUND)
         val dto = getResponse.body
         assertThat(dto).isNull()
@@ -144,7 +138,7 @@ class BackendUserTests {
         val putResponse = testRestTemplate.exchange<Void>("/api/user/fak", HttpMethod.DELETE)
         assertThat(putResponse.statusCode).isEqualTo(HttpStatus.NOT_FOUND)
 
-        val getResponse = testRestTemplate.getForEntity<UserDto>("/api/user/${testUser.id}")
+        val getResponse = testRestTemplate.getForEntity<UserDto>("/api/user/${testUser.username}")
         assertThat(getResponse.statusCode).isEqualTo(HttpStatus.OK)
         val dto = getResponse.body
         assertThat(dto).isNotNull()

@@ -1,8 +1,8 @@
 package hu.almokatepitunk.backend.users
 
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.util.UriComponentsBuilder
 
@@ -31,26 +31,26 @@ class UserController {
         return ResponseEntity.ok(users)
     }
 
-    @GetMapping("/api/user/{id}")
-    fun getUserById(@PathVariable("id") id: String): ResponseEntity<UserDto> {
+    @GetMapping("/api/user/{username}")
+    fun getUserByUsername(@PathVariable("username") username: String): ResponseEntity<UserDto> {
         try {
-            val user = userService.getUserById(id)
+            val user = userService.getUserByUsername(username)
             return ResponseEntity.ok(user)
-        } catch (e:IllegalArgumentException) {
+        } catch (e:UsernameNotFoundException) {
             return ResponseEntity.notFound().build()
         } catch (e:Exception) {
             return ResponseEntity.internalServerError().build()
         }
     }
 
-    @PutMapping("/api/user/{id}")
-    fun updateUser(@PathVariable("id") id: String,userDto: UserDto): ResponseEntity<Void> {
+    @PutMapping("/api/user/{username}")
+    fun updateUser(@PathVariable("username") username: String, @RequestBody userDto: UserDto): ResponseEntity<Void> {
         try {
-            userService.updateUser(id, userDto)
+            userService.updateUser(username, userDto)
             return ResponseEntity.ok().build()
-        } catch (e:IllegalArgumentException) {
+        } catch (e:UsernameNotFoundException) {
             return ResponseEntity.notFound().build()
-        } catch (e:UserService.IdConflictException){
+        } catch (e:UserService.UsernameConflictException){
             return ResponseEntity.badRequest().build()
         } catch (e:Exception) {
             return ResponseEntity.internalServerError().build()
@@ -58,12 +58,12 @@ class UserController {
 
     }
 
-    @DeleteMapping("/api/user")
-    fun deleteUserById(userToDelete: UserDto): ResponseEntity<String> {
+    @DeleteMapping("/api/user/{username}")
+    fun deleteUserById(@PathVariable("username") usernameToDelete:String): ResponseEntity<String> {
         try {
-            val deletedId = userService.deleteUser(userToDelete)
+            val deletedId = userService.deleteUser(usernameToDelete)
             return ResponseEntity.ok(deletedId)
-        } catch (e:IllegalArgumentException) {
+        } catch (e:UsernameNotFoundException) {
             return ResponseEntity.notFound().build()
         } catch (e:Exception) {
             return ResponseEntity.internalServerError().build()

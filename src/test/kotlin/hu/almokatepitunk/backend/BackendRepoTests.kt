@@ -15,12 +15,13 @@ class BackendRepoTests {
     @Autowired
     lateinit var repo: UserRepository
 
+    val testUser = User("6761cd8062d02b0120dff1ba","admin","gsrnjhdetöinfbóíúdf",
+        "NaCl")
+
     @BeforeEach
     fun setup() {
         repo.deleteAll()
-        val user = User("6761cd8062d02b0120dff1ba","admin","gsrnjhdetöinfbóíúdf",
-            "NaCl")
-        repo.save(user)
+        repo.save(testUser)
     }
 
     @Test
@@ -33,44 +34,32 @@ class BackendRepoTests {
     fun readUser(){
         val user = repo.findByUsername("admin")
         assertThat(user).isNotNull
-        val exampleUser = User("admin","gsrnjhdetöinfbóíúdf",
-            "NaCl")
-        assertThat(user).isEqualTo(exampleUser)
+        assertThat(user).isEqualTo(testUser)
     }
 
     @Test
     @DirtiesContext()
     fun addUser(){
         repo.deleteAll()
-        val user = User("6761cd8062d02b0120dff1ba","admin","gsrnjhdetöinfbóíúdf",
-            "NaCl")
-        val response = repo.save(user)
-        assertThat(response).isEqualTo(user)
+        val response = repo.save(testUser)
+        assertThat(response).isEqualTo(testUser)
     }
 
     @Test
     @DirtiesContext
     fun deleteUser(){
-        val user = User("6761cd8062d02b0120dff1ba","admin", "gsrnjhdetöinfbóíúdf",
-            "NaCl")
-        repo.save(user)
-        repo.delete(user)
+        repo.delete(testUser)
         val users = repo.findAll()
         assertThat(users).containsExactlyInAnyOrder()
-        repo.save(user)
     }
 
     @Test
     @DirtiesContext
     fun updateUser(){
-        val newUser = User("6761cd8062d02b0120dff1ba","admin","gsrnjhdeúdf",
-            "NaCl")
+        val newUser = testUser.copy(passwordHash = "fak")
         val user = repo.save(newUser)
         assertThat(user).isEqualTo(newUser)
-        assertThat(user).isNotEqualTo(
-            User("6761cd8062d02b0120dff1ba","admin",
-            "gsrnjhdetöinfbóíúdf", "NaCl")
-        )
+        assertThat(user).isNotEqualTo(testUser)
     }
 
 }

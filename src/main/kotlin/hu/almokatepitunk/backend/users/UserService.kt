@@ -33,29 +33,26 @@ class UserService{
         return dtos
     }
 
-    fun getUserById(id:String): UserDto {
-        val optionalUser = userRepository.findById(id)
-        if(optionalUser.isEmpty){
-            throw IllegalArgumentException("User not found")
-        }
-        val user = optionalUser.get()
-        val dto = UserDto(user.username,user.passwordHash)
+    fun getUserByUsername(username:String): UserDto {
+        val possibleUser = userRepository.findByUsername(username) ?:
+        throw UsernameNotFoundException("Username not found")
+        val dto = UserDto(possibleUser.username, possibleUser.passwordHash)
         return dto
     }
 
-    fun updateUser(idToUpdate: String, userDto: UserDto): UserDto {
-        if(!checkExistingUserById(idToUpdate)) throw IllegalArgumentException("Given id does not exist")
+    fun updateUser(usernameToUpdate: String, userDto: UserDto): UserDto {
+        if(usernameToUpdate != userDto.username) throw UsernameConflictException("The two usernames do not match.")
         if(!checkExistingUser(userDto.username)) throw UsernameNotFoundException("Username not found")
         val user = userRepository.findByUsername(userDto.username)!!
-        if(idToUpdate != user.id) throw IdConflictException("Given id does not match the user id")
-        val updatedUser = userRepository.save(user)
+        val userToUpdate = User(user.id,userDto.username,userDto.password,user.salt)
+        val updatedUser = userRepository.save(userToUpdate)
         val dto = userDto.copy(password = updatedUser.passwordHash)
         return dto
     }
 
-    fun deleteUser(userDto: UserDto): String {
-        if(!checkExistingUser(userDto.username)) throw UsernameNotFoundException("Username not found")
-        val user = userRepository.findByUsername(userDto.username)!!
+    fun deleteUser(username:String): String {
+        if(!checkExistingUser(username)) throw UsernameNotFoundException("Username not found")
+        val user = userRepository.findByUsername(username)!!
         userRepository.delete(user)
         return user.id
     }
@@ -64,9 +61,5 @@ class UserService{
         return userRepository.findByUsername(username) != null
     }
 
-    private fun checkExistingUserById(id:String): Boolean{
-        return userRepository.findById(id).isPresent
-    }
-
-    class IdConflictException(message:String): Exception()
+    class UsernameConflictException(message:String): Exception()
 }

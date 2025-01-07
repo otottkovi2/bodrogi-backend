@@ -16,11 +16,11 @@ class BackendServerTests {
 
     @Test
     fun getAdmin(){
-        val result = testRestTemplate.getForEntity<String>("/admin")
+        val result = testRestTemplate.getForEntity<String>("/")
         assertThat(result.statusCode).isEqualTo(HttpStatus.OK)
         val body = result.body
-        assertThat(body).startsWith("<!DOCTYPE html>")
-        assertThat(body).contains("Admin site")
+        assertThat(body).startsWith("<!doctype html>")
+        assertThat(body).contains("It works!")
     }
 
 }
