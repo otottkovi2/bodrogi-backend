@@ -1,7 +1,7 @@
-package hu.almokatepitunk.backend.users
+package hu.almokatepitunk.backend.users.services
 
+import hu.almokatepitunk.backend.users.UserRepository
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.userdetails.User
 import org.springframework.security.core.userdetails.UserDetailsService

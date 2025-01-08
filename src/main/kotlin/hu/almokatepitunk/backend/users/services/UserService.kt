@@ -1,5 +1,8 @@
-package hu.almokatepitunk.backend.users
+package hu.almokatepitunk.backend.users.services
 
+import hu.almokatepitunk.backend.users.User
+import hu.almokatepitunk.backend.users.UserDto
+import hu.almokatepitunk.backend.users.UserRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.security.crypto.password.PasswordEncoder

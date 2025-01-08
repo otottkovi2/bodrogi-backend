@@ -1,5 +1,7 @@
-package hu.almokatepitunk.backend.users
+package hu.almokatepitunk.backend.users.controllers
 
+import hu.almokatepitunk.backend.users.UserDto
+import hu.almokatepitunk.backend.users.services.UserService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.userdetails.UsernameNotFoundException
@@ -50,7 +52,7 @@ class UserController {
             return ResponseEntity.ok().build()
         } catch (e:UsernameNotFoundException) {
             return ResponseEntity.notFound().build()
-        } catch (e:UserService.UsernameConflictException){
+        } catch (e: UserService.UsernameConflictException){
             return ResponseEntity.badRequest().build()
         } catch (e:Exception) {
             return ResponseEntity.internalServerError().build()
