@@ -12,7 +12,7 @@ import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
 
 @Configuration
-class AdminSecurityConfig {
+class UserSecurityConfig {
 
     @Autowired
     private lateinit var userDetailsService: UserDetailsService
@@ -26,11 +26,16 @@ class AdminSecurityConfig {
     @Order(1)
     fun adminFilterChain(http: HttpSecurity): SecurityFilterChain {
         with(http) {
-            securityMatcher("/admin/**")
+            securityMatcher("/admin/**","/login/**")
             authorizeHttpRequests {
                     it.requestMatchers("/admin/**").hasRole("ADMIN")
+                    it.requestMatchers("/login/**").permitAll()
+                        .anyRequest().authenticated()
                 }
-            csrf {it.disable() }
+            formLogin {
+                it.loginPage("/login").permitAll()
+            }
+            csrf {}
             cors { it.disable() }
         }
         return http.build()

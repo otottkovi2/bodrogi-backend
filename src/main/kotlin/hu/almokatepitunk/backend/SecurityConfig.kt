@@ -19,7 +19,7 @@ class SecurityConfig {
                 it.requestMatchers("/index.html").permitAll()
                     .anyRequest().denyAll()
             }
-            csrf { it.disable() }
+            csrf {}
             cors { it.disable() }
         }
         return http.build()
