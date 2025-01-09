@@ -1,11 +1,15 @@
 services:
+  springboot:
+    build: .
+    ports:
+      - "8080:8080"
   mongodb:
     image: mongodb/mongodb-community-server:8.0-ubuntu2204
     environment:
       - MONGODB_INITDB_ROOT_USERNAME=root
-      - MONGODB_INITDB_ROOT_PASSWORD=password
+      - MONGODB_INITDB_ROOT_PASSWORD=  #add a password here
     volumes:
-      - "./data:/data/db"
-    network_mode: "host"
+    - #mount a volume for /data/db here
     ports:
       - "27017:27017"
+
