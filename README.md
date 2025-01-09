@@ -18,43 +18,34 @@ Copy your pages to their respective locations under `src/main/resources/static`.
 
 ### 2. *(optional)* Set up the built-in MongoDB database
 
-*This is only needed if you use the MongoDB setup included in the `compose.yaml` file. If you use your own instance, skip to Step 3.*
+*This is only needed if you use the built-in MongoDB database. Otherwise skip to step 3.
+Follow the instructions listed ![here](https://github.com/otottkovi2/bodrogi-backend/blob/readme-docs/builtin_db_setup.md).
 
-Comment out the `springboot` service in the compose.yaml file like so:
+### 3. Provide database details to the server
 
-    services:
-    # springboot:
-    #   build: .
-    #   ports:
-     #   - "8080:8080"
-      mongodb:
-    The rest of compose.yaml...
+Open `src/main/resources/application.properties`:
 
-Write a root password where prompted.
+Fill in the required information.
 
-Set a volume where the database will store its files. To do this, write a path on your computer, followed by `:/data/db`:
+Explanation of the fields:
 
-    volumes:
-      - "./data:/data/db" # <-- In this example, all database files are stored under a 'data' folder in the project root.
+Field | Value for the built-in database | Value for other instances
+|-----|---------------------------------|---------------------------|
+spring.data.mongodb.host | The name of the MongoDB container. | The location of your database.
+spring.data.mongodb.username | The name of the created user | The name of the user you want to use to access the database.
+spring.data.mongodb.password | The password of the created user. | The password of the user you want to use to access the database.
+spring.data.mongodb.database | The name of the created database. | The name of the database you want to use.
 
-Save and close the `compose.yaml` file.
+Save the file.
 
-Make sure you have a terminal running in the project folder.
+### 4. Build and start the server
 
-Start the database with:
+To build and start the server, run:
 
-    docker compose up
-
-> In case the database stops after a few seconds and the logs show 'permission denied' errors, try to give the user running docker (your user on Windows, the `docker` group on Linux) full access to the volume folder.
-
-If the database runs for a few seconds without shutting down, stop it and restart it with:
-
-    docker compose down
     docker compose up -d
 
-Take note of the name of the container. 
-Open a MongoDB shell using:
+The build process takes a while, but only needs to run once.
 
-    docker exec -it <container's name> mongosh
+>Note: If for some reason need to rebuild the server, run `docker compose build` as simply starting the server won't start a new build.
 
-This open
+###### This project is not affiliated with Bodrogi Bau Kft.
