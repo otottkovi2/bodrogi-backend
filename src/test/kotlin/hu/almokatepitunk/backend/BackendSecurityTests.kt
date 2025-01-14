@@ -6,8 +6,6 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.test.web.client.TestRestTemplate
-import org.springframework.boot.test.web.client.getForEntity
 import org.springframework.http.HttpStatus
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.BadCredentialsException
@@ -21,9 +19,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 class BackendSecurityTests() {
-
-    @Autowired
-    lateinit var testRestTemplate: TestRestTemplate
 
     @Autowired
     lateinit var mockMvc: MockMvc
@@ -78,7 +73,7 @@ class BackendSecurityTests() {
 
     @Test
     fun dontAuthenticateNonExistingUser() {
-        val auth = try {
+        try {
             authenticationManager.authenticate(
                 UsernamePasswordAuthenticationToken("an alien", "secure password")
             )
