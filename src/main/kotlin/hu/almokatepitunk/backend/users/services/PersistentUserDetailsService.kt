@@ -15,16 +15,13 @@ import org.springframework.transaction.annotation.Transactional
 class PersistentUserDetailsService : UserDetailsService {
 
     @Autowired
-    private lateinit var passwordEncoder: PasswordEncoder
-
-    @Autowired
     private lateinit var userRepository: UserRepository
 
     override fun loadUserByUsername(username: String): UserDetails {
         val user = userRepository.findByUsername(username) ?:
         throw UsernameNotFoundException("User $username not found")
 
-        val springUser = User.withUsername(user.username).password(passwordEncoder.encode(user.passwordHash))
+        val springUser = User.withUsername(user.username).password(user.passwordHash)
             .roles("ADMIN").build()
         return springUser
     }

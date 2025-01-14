@@ -22,7 +22,7 @@ class UserSecurityConfig {
     private lateinit var passwordEncoder: PasswordEncoder
 
     @Bean
-    fun authenticationManager(): AuthenticationManager {
+    fun useCustomAuthenticationManager(): AuthenticationManager {
         val authProvider = DaoAuthenticationProvider()
         authProvider.setUserDetailsService(userDetailsService)
         authProvider.setPasswordEncoder(passwordEncoder)
@@ -43,6 +43,7 @@ class UserSecurityConfig {
             formLogin {
                 it.loginPage("/login").permitAll()
             }
+            authenticationManager(useCustomAuthenticationManager())
             csrf {}
             cors { it.disable() }
         }
