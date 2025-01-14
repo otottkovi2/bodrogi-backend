@@ -27,7 +27,7 @@ class BackendUserTests {
     lateinit var userRepository: UserRepository
 
     private val testUser = User(
-        "677806696c33cb173dbbd598", "new user",
+        "new user",
         "\$2a\$10\$yOEQM1d/3Himz3XI7HKrResEzNqK9n7O9l81aTGI4OSLeKdcz24x2", "")
 
     @BeforeEach
@@ -40,7 +40,7 @@ class BackendUserTests {
     @DirtiesContext
     fun registerNewUser(){
         userRepository.deleteAll()
-        val userToCreate = UserDto(testUser.username,testUser.passwordHash)
+        val userToCreate = UserDto(testUser.username,"password")
         val response = testRestTemplate.postForEntity<Void>("/api/register",userToCreate)
         assertThat(response.statusCode).isEqualTo(HttpStatus.CREATED)
         val location = response.headers.location
@@ -50,14 +50,15 @@ class BackendUserTests {
     @Test
     @DirtiesContext
     fun dontRegisterExistingUser(){
-        val userToCreate = UserDto("new user","pasword")
+        val userToCreate = UserDto(testUser.username,"pasword")
         val response = testRestTemplate.postForEntity<Void>("/api/register",userToCreate)
         assertThat(response.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
     }
 
     @Test
     fun getAllUsers(){
-        val response = testRestTemplate.getForEntity<List<UserDto>>("/api/user")
+        val response = testRestTemplate.withBasicAuth("new user","fak")
+            .getForEntity<List<UserDto>>("/api/user")
         assertThat(response.statusCode).isEqualTo(HttpStatus.OK)
         val userCount = response.body?.size
         assertThat(userCount).isEqualTo(1)

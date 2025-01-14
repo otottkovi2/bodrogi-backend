@@ -25,7 +25,7 @@ class UserService{
         userRepository.save(userToSave)
         val savedUser = userRepository.findByUsername(user.username)
         if(savedUser == null) throw UsernameNotFoundException("Username not found")
-        else return savedUser.id
+        else return savedUser.username
     }
 
     fun getAllUsers(): List<UserDto> {
@@ -47,7 +47,7 @@ class UserService{
         if(usernameToUpdate != userDto.username) throw UsernameConflictException("The two usernames do not match.")
         if(!checkExistingUser(userDto.username)) throw UsernameNotFoundException("Username not found")
         val user = userRepository.findByUsername(userDto.username)!!
-        val userToUpdate = User(user.id,userDto.username,passwordEncoder.encode(userDto.password),user.salt)
+        val userToUpdate = User(userDto.username,passwordEncoder.encode(userDto.password),user.salt)
         val updatedUser = userRepository.save(userToUpdate)
         val dto = userDto.copy(password = updatedUser.passwordHash)
         return dto
@@ -57,7 +57,7 @@ class UserService{
         if(!checkExistingUser(username)) throw UsernameNotFoundException("Username not found")
         val user = userRepository.findByUsername(username)!!
         userRepository.delete(user)
-        return user.id
+        return user.username
     }
 
     private fun checkExistingUser(username:String): Boolean{

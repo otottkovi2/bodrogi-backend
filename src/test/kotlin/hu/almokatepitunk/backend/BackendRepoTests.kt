@@ -15,7 +15,7 @@ class BackendRepoTests {
     @Autowired
     lateinit var repo: UserRepository
 
-    val testUser = User("6761cd8062d02b0120dff1ba","admin","gsrnjhdetöinfbóíúdf",
+    val testUser = User("admin","gsrnjhdetöinfbóíúdf",
         "NaCl")
 
     @BeforeEach
@@ -38,7 +38,7 @@ class BackendRepoTests {
     }
 
     @Test
-    @DirtiesContext()
+    @DirtiesContext
     fun addUser(){
         repo.deleteAll()
         val response = repo.save(testUser)
