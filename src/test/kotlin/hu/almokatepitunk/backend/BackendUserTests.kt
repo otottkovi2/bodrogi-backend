@@ -12,27 +12,33 @@ import org.springframework.boot.test.web.client.TestRestTemplate
 import org.springframework.boot.test.web.client.exchange
 import org.springframework.boot.test.web.client.getForEntity
 import org.springframework.boot.test.web.client.postForEntity
-import org.springframework.http.HttpEntity
-import org.springframework.http.HttpMethod
-import org.springframework.http.HttpStatus
+import org.springframework.boot.web.client.RestTemplateBuilder
+import org.springframework.context.annotation.Bean
+import org.springframework.data.domain.Example
+import org.springframework.http.*
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.test.annotation.DirtiesContext
+import org.springframework.util.LinkedMultiValueMap
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class BackendUserTests {
 
     @Autowired
-    lateinit var testRestTemplate: TestRestTemplate
+    private lateinit var passwordEncoder: PasswordEncoder
+
+    @Autowired
+    private lateinit var testRestTemplate: TestRestTemplate
 
     @Autowired
     lateinit var userRepository: UserRepository
 
     private val testUser = User(
         "new user",
-        "\$2a\$10\$yOEQM1d/3Himz3XI7HKrResEzNqK9n7O9l81aTGI4OSLeKdcz24x2", "")
+        "{bcrypt}\$2a\$10\$57FYrXITZfEeeIQ/7oGshuEkSQsMwiAziHINixZwfPZJH8658jPWS", "")
 
     @BeforeEach
     fun setup() {
-        userRepository.deleteAll()
+        if(userRepository.exists(Example.of(testUser))) return
         userRepository.save(testUser)
     }
 
@@ -57,11 +63,11 @@ class BackendUserTests {
 
     @Test
     fun getAllUsers(){
-        val response = testRestTemplate.withBasicAuth("new user","fak")
-            .getForEntity<List<UserDto>>("/api/user")
+        val authHeaders = login()
+        val response = testRestTemplate.getForEntity<List<UserDto>>("/api/user",HttpEntity<Void>(authHeaders))
         assertThat(response.statusCode).isEqualTo(HttpStatus.OK)
         val userCount = response.body?.size
-        assertThat(userCount).isEqualTo(1)
+        assertThat(userCount).isGreaterThan(0)
     }
 
     @Test
@@ -143,5 +149,39 @@ class BackendUserTests {
         assertThat(getResponse.statusCode).isEqualTo(HttpStatus.OK)
         val dto = getResponse.body
         assertThat(dto).isNotNull()
+    }
+
+    private fun login(): HttpHeaders {
+
+        fun getCsrfToken(getResponse: ResponseEntity<String>) =
+            getResponse.headers.getFirst("set-cookie")?.split(Regex("(;\\s\\w+)*="))
+                ?.get(1) ?: throw CsrfNotProvidedException()
+
+        val getResponse = testRestTemplate.getForEntity<String>("/login")
+        val csrfToken = getCsrfToken(getResponse)
+
+        val loginData = LinkedMultiValueMap<String, String>().apply {
+            add("username", testUser.username)
+            add("password", "password")
+            add("_csrf",csrfToken)
+        }
+        val headers = HttpHeaders()
+            headers.add("X-XSRF-TOKEN",csrfToken)
+            headers.add("Cookie","XSRF-TOKEN=$csrfToken; Path=/")
+        val postResponse = testRestTemplate.postForEntity<String>("/login",
+            HttpEntity(loginData,headers)
+        )
+        assertThat(postResponse.statusCode).isEqualTo(HttpStatus.OK)
+        assertThat(postResponse.body).contains("Homepage")
+        return headers
+    }
+
+
+
+    private class CsrfNotProvidedException : RuntimeException()
+
+    @Bean
+    fun testRestTemplate(): TestRestTemplate{
+        return TestRestTemplate(TestRestTemplate.HttpClientOption.ENABLE_COOKIES)
     }
 }
