@@ -3,6 +3,8 @@ package hu.almokatepitunk.backend
 import hu.almokatepitunk.backend.users.UserDto
 import hu.almokatepitunk.backend.users.User
 import hu.almokatepitunk.backend.users.UserRepository
+import hu.almokatepitunk.backend.utils.SecureHttpClient
+import hu.almokatepitunk.backend.utils.SecureHttpClient.Companion.getForEntitySecure
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -12,19 +14,13 @@ import org.springframework.boot.test.web.client.TestRestTemplate
 import org.springframework.boot.test.web.client.exchange
 import org.springframework.boot.test.web.client.getForEntity
 import org.springframework.boot.test.web.client.postForEntity
-import org.springframework.boot.web.client.RestTemplateBuilder
-import org.springframework.context.annotation.Bean
 import org.springframework.data.domain.Example
 import org.springframework.http.*
-import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.test.annotation.DirtiesContext
-import org.springframework.util.LinkedMultiValueMap
+import org.springframework.web.context.WebApplicationContext
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class BackendUserTests {
-
-    @Autowired
-    private lateinit var passwordEncoder: PasswordEncoder
 
     @Autowired
     private lateinit var testRestTemplate: TestRestTemplate
@@ -32,12 +28,18 @@ class BackendUserTests {
     @Autowired
     lateinit var userRepository: UserRepository
 
+    @Autowired
+    lateinit var applicationContext: WebApplicationContext
+
+    lateinit var httpClient: SecureHttpClient
+
     private val testUser = User(
         "new user",
         "{bcrypt}\$2a\$10\$57FYrXITZfEeeIQ/7oGshuEkSQsMwiAziHINixZwfPZJH8658jPWS", "")
 
     @BeforeEach
     fun setup() {
+        if (!this::httpClient.isInitialized) httpClient = SecureHttpClient(applicationContext,"new user")
         if(userRepository.exists(Example.of(testUser))) return
         userRepository.save(testUser)
     }
@@ -63,8 +65,9 @@ class BackendUserTests {
 
     @Test
     fun getAllUsers(){
-        val authHeaders = login()
-        val response = testRestTemplate.getForEntity<List<UserDto>>("/api/user",HttpEntity<Void>(authHeaders))
+        val debugResponse = testRestTemplate.getForEntitySecure(httpClient,"/api/users",String::class.java)
+        //todo:find a way to output a lsit type
+        val response = testRestTemplate.getForEntitySecure(httpClient,"api/users",String::class.java)
         assertThat(response.statusCode).isEqualTo(HttpStatus.OK)
         val userCount = response.body?.size
         assertThat(userCount).isGreaterThan(0)
@@ -149,39 +152,5 @@ class BackendUserTests {
         assertThat(getResponse.statusCode).isEqualTo(HttpStatus.OK)
         val dto = getResponse.body
         assertThat(dto).isNotNull()
-    }
-
-    private fun login(): HttpHeaders {
-
-        fun getCsrfToken(getResponse: ResponseEntity<String>) =
-            getResponse.headers.getFirst("set-cookie")?.split(Regex("(;\\s\\w+)*="))
-                ?.get(1) ?: throw CsrfNotProvidedException()
-
-        val getResponse = testRestTemplate.getForEntity<String>("/login")
-        val csrfToken = getCsrfToken(getResponse)
-
-        val loginData = LinkedMultiValueMap<String, String>().apply {
-            add("username", testUser.username)
-            add("password", "password")
-            add("_csrf",csrfToken)
-        }
-        val headers = HttpHeaders()
-            headers.add("X-XSRF-TOKEN",csrfToken)
-            headers.add("Cookie","XSRF-TOKEN=$csrfToken; Path=/")
-        val postResponse = testRestTemplate.postForEntity<String>("/login",
-            HttpEntity(loginData,headers)
-        )
-        assertThat(postResponse.statusCode).isEqualTo(HttpStatus.OK)
-        assertThat(postResponse.body).contains("Homepage")
-        return headers
-    }
-
-
-
-    private class CsrfNotProvidedException : RuntimeException()
-
-    @Bean
-    fun testRestTemplate(): TestRestTemplate{
-        return TestRestTemplate(TestRestTemplate.HttpClientOption.ENABLE_COOKIES)
     }
 }
