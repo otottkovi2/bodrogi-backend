@@ -10,15 +10,11 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.json.AutoConfigureJsonTesters
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.json.JacksonTester
-import org.springframework.boot.test.web.client.TestRestTemplate
-import org.springframework.boot.test.web.client.exchange
-import org.springframework.boot.test.web.client.getForEntity
 import org.springframework.data.domain.Example
 import org.springframework.data.domain.ExampleMatcher
 import org.springframework.http.*
 import org.springframework.security.test.context.support.WithMockUser
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf
-import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity
 import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.web.servlet.assertj.MockMvcTester
@@ -38,17 +34,15 @@ class BackendUserTests {
     private lateinit var userJsonSerializer: JacksonTester<UserDto>
 
     @Autowired
-    private lateinit var userListJsonSerializer:JacksonTester<List<UserDto>>
-
-    @Autowired
-    private lateinit var testRestTemplate: TestRestTemplate
+    private lateinit var userListJsonSerializer: JacksonTester<List<UserDto>>
 
     @Autowired
     lateinit var userRepository: UserRepository
 
     private val testUser = User(
         "new user",
-        "{bcrypt}\$2a\$10\$57FYrXITZfEeeIQ/7oGshuEkSQsMwiAziHINixZwfPZJH8658jPWS", "")
+        "{bcrypt}\$2a\$10\$57FYrXITZfEeeIQ/7oGshuEkSQsMwiAziHINixZwfPZJH8658jPWS", ""
+    )
 
     @BeforeEach
     fun setup() {
@@ -56,16 +50,16 @@ class BackendUserTests {
             config.apply<DefaultMockMvcBuilder>(springSecurity())
                 .build()
         }
-        val exampleMatcher = ExampleMatcher.matching().withIgnorePaths("id","passwordHash")
-        if(userRepository.exists(Example.of(testUser, exampleMatcher))) return
+        val exampleMatcher = ExampleMatcher.matching().withIgnorePaths("id", "passwordHash")
+        if (userRepository.exists(Example.of(testUser, exampleMatcher))) return
         userRepository.save(testUser)
     }
 
     @Test
     @DirtiesContext
-    fun registerNewUser(){
+    fun registerNewUser() {
         userRepository.deleteAll()
-        val userToCreate = UserDto(testUser.username,"password")
+        val userToCreate = UserDto(testUser.username, "password")
         val userJson = userJsonSerializer.write(userToCreate)
         val result = mockMvc.post()
             .uri("/api/register")
@@ -78,8 +72,8 @@ class BackendUserTests {
 
     @Test
     @DirtiesContext
-    fun dontRegisterExistingUser(){
-        val userToCreate = UserDto(testUser.username,"pasword")
+    fun dontRegisterExistingUser() {
+        val userToCreate = UserDto(testUser.username, "pasword")
         val userJson = userJsonSerializer.write(userToCreate)
         val result = mockMvc.post()
             .uri("/api/register")
@@ -90,8 +84,8 @@ class BackendUserTests {
     }
 
     @Test
-    @WithMockUser()
-    fun getAllUsers(){
+    @WithMockUser
+    fun getAllUsers() {
         val result = mockMvc.get()
             .uri("/api/user")
             .accept(MediaType.APPLICATION_JSON)
@@ -103,10 +97,10 @@ class BackendUserTests {
     }
 
     @Test
-    @WithMockUser()
-    fun getUserById(){
+    @WithMockUser
+    fun getUserById() {
         val result = mockMvc.get()
-            .uri("/api/user/{username}",testUser.username)
+            .uri("/api/user/{username}", testUser.username)
             .accept(MediaType.APPLICATION_JSON)
             .exchange()
         assertThat(result.response.status).isEqualTo(HttpStatus.OK.value())
@@ -116,10 +110,10 @@ class BackendUserTests {
     }
 
     @Test
-    @WithMockUser()
-    fun dontGetNonExistingUser(){
+    @WithMockUser
+    fun dontGetNonExistingUser() {
         val result = mockMvc.get()
-            .uri("/api/user/{username}",testUser.username.plus(" impostor"))
+            .uri("/api/user/{username}", testUser.username.plus(" impostor"))
             .accept(MediaType.APPLICATION_JSON)
             .exchange()
         assertThat(result.response.status).isEqualTo(HttpStatus.NOT_FOUND.value())
@@ -128,11 +122,11 @@ class BackendUserTests {
     @Test
     @DirtiesContext
     @WithMockUser(username = "new user", password = "password")
-    fun putExistingUser(){
-        val userToUpdate = UserDto(testUser.username,"fak")
+    fun putExistingUser() {
+        val userToUpdate = UserDto(testUser.username, "fak")
         val userJson = userJsonSerializer.write(userToUpdate)
         val result = mockMvc.put()
-            .uri("/api/user/{username}",testUser.username)
+            .uri("/api/user/{username}", testUser.username)
             .contentType(MediaType.APPLICATION_JSON)
             .content(userJson.json)
             .with(csrf())
@@ -154,12 +148,12 @@ class BackendUserTests {
     @Test
     @DirtiesContext
     @WithMockUser(username = "new user impostor", password = "password")
-    fun dontPutNonExistingUser(){
+    fun dontPutNonExistingUser() {
         val wrongName = testUser.username.plus(" impostor")
-        val userToUpdate = UserDto(wrongName,"fak")
+        val userToUpdate = UserDto(wrongName, "fak")
         val userJson = userJsonSerializer.write(userToUpdate)
         val result = mockMvc.put()
-            .uri("/api/user/{username}",wrongName)
+            .uri("/api/user/{username}", wrongName)
             .contentType(MediaType.APPLICATION_JSON)
             .content(userJson.json)
             .with(csrf())
@@ -181,12 +175,12 @@ class BackendUserTests {
     @Test
     @DirtiesContext
     @WithMockUser(username = "new user", password = "password")
-    fun dontPutUserWithWrongNameParam(){
+    fun dontPutUserWithWrongNameParam() {
         val wrongName = testUser.username.plus(" impostor")
-        val userToUpdate = UserDto(testUser.username,"fak")
+        val userToUpdate = UserDto(testUser.username, "fak")
         val userJson = userJsonSerializer.write(userToUpdate)
         val result = mockMvc.put()
-            .uri("/api/user/{username}",wrongName)
+            .uri("/api/user/{username}", wrongName)
             .contentType(MediaType.APPLICATION_JSON)
             .content(userJson.json)
             .with(csrf())
@@ -208,8 +202,8 @@ class BackendUserTests {
     @Test
     @DirtiesContext
     @WithMockUser(username = "new user impostor", password = "password")
-    fun dontPutUserByNotOwner(){
-        val userToUpdate = UserDto(testUser.username,"fak")
+    fun dontPutUserByNotOwner() {
+        val userToUpdate = UserDto(testUser.username, "fak")
         val userJson = userJsonSerializer.write(userToUpdate)
         val result = mockMvc.put()
             .uri("/api/user/{username}", testUser.username)
@@ -234,7 +228,7 @@ class BackendUserTests {
     @Test
     @DirtiesContext
     @WithMockUser(username = "new user", password = "password")
-    fun deleteExistingUser(){
+    fun deleteExistingUser() {
         val result = mockMvc.delete()
             .uri("/api/user/{username}", testUser.username)
             .with(csrf())
@@ -252,7 +246,7 @@ class BackendUserTests {
     @Test
     @DirtiesContext
     @WithMockUser(username = "new user", password = "password")
-    fun dontDeleteNonExistingUser(){
+    fun dontDeleteNonExistingUser() {
         val wrongName = testUser.username.plus(" impostor")
         val result = mockMvc.delete()
             .uri("/api/user/{username}", wrongName)
@@ -266,7 +260,7 @@ class BackendUserTests {
             .exchange()
         assertThat(getResult.response.status).isEqualTo(HttpStatus.OK.value())
         val user = userJsonSerializer.parse(getResult.response.contentAsString).`object`
-        val dto = UserDto(testUser.username,testUser.passwordHash)
+        val dto = UserDto(testUser.username, testUser.passwordHash)
         assertThat(user).isNotNull
         assertThat(user).isEqualTo(dto)
     }
