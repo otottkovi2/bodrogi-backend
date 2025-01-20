@@ -127,66 +127,147 @@ class BackendUserTests {
 
     @Test
     @DirtiesContext
+    @WithMockUser(username = "new user", password = "password")
     fun putExistingUser(){
         val userToUpdate = UserDto(testUser.username,"fak")
-        val putResponse = testRestTemplate.exchange<Void>("/api/user/${userToUpdate.username}", HttpMethod.PUT,
-            HttpEntity(userToUpdate))
-        assertThat(putResponse.statusCode).isEqualTo(HttpStatus.OK)
+        val userJson = userJsonSerializer.write(userToUpdate)
+        val result = mockMvc.put()
+            .uri("/api/user/{username}",testUser.username)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(userJson.json)
+            .with(csrf())
+            .exchange()
+        assertThat(result.response.status).isEqualTo(HttpStatus.OK.value())
 
-        val getResponse = testRestTemplate.getForEntity<UserDto>("/api/user/${userToUpdate.username}")
-        assertThat(getResponse.statusCode).isEqualTo(HttpStatus.OK)
-        val dto = getResponse.body
-        assertThat(dto).isNotNull()
-        val newUser = userRepository.findByUsername(dto!!.username)
-        assertThat(newUser).isNotEqualTo(testUser)
+        val getResult = mockMvc.get()
+            .uri("/api/user/{username}", testUser.username)
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+        assertThat(getResult.response.status).isEqualTo(HttpStatus.OK.value())
+        assertThat(getResult.response.contentAsString).isNotNull
+        val updatedUser = userJsonSerializer.parse(getResult.response.contentAsString).`object`
+        assertThat(updatedUser).isNotNull
+        assertThat(updatedUser.username).isEqualTo(testUser.username)
+        assertThat(updatedUser.password).isNotEqualTo(testUser.passwordHash)
     }
 
     @Test
     @DirtiesContext
+    @WithMockUser(username = "new user impostor", password = "password")
     fun dontPutNonExistingUser(){
-        val userToUpdate = UserDto("fak",testUser.passwordHash)
-        val putResponse = testRestTemplate.exchange<Void>("/api/user/fak", HttpMethod.PUT,HttpEntity(userToUpdate))
-        assertThat(putResponse.statusCode).isEqualTo(HttpStatus.NOT_FOUND)
+        val wrongName = testUser.username.plus(" impostor")
+        val userToUpdate = UserDto(wrongName,"fak")
+        val userJson = userJsonSerializer.write(userToUpdate)
+        val result = mockMvc.put()
+            .uri("/api/user/{username}",wrongName)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(userJson.json)
+            .with(csrf())
+            .exchange()
+        assertThat(result.response.status).isEqualTo(HttpStatus.NOT_FOUND.value())
+
+        val getResult = mockMvc.get()
+            .uri("/api/user/{username}", testUser.username)
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+        assertThat(getResult.response.status).isEqualTo(HttpStatus.OK.value())
+        assertThat(getResult.response.contentAsString).isNotNull
+        val updatedUser = userJsonSerializer.parse(getResult.response.contentAsString).`object`
+        assertThat(updatedUser).isNotNull
+        assertThat(updatedUser.username).isEqualTo(testUser.username)
+        assertThat(updatedUser.password).isEqualTo(testUser.passwordHash)
     }
 
     @Test
     @DirtiesContext
-    fun dontPutUserWithWrongId(){
-        val userToUpdate = UserDto(testUser.username,testUser.passwordHash)
-        val putResponse = testRestTemplate.exchange<Void>(
-            "/api/user/old user", HttpMethod.PUT,
-            HttpEntity(userToUpdate))
-        assertThat(putResponse.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)
+    @WithMockUser(username = "new user", password = "password")
+    fun dontPutUserWithWrongNameParam(){
+        val wrongName = testUser.username.plus(" impostor")
+        val userToUpdate = UserDto(testUser.username,"fak")
+        val userJson = userJsonSerializer.write(userToUpdate)
+        val result = mockMvc.put()
+            .uri("/api/user/{username}",wrongName)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(userJson.json)
+            .with(csrf())
+            .exchange()
+        assertThat(result.response.status).isEqualTo(HttpStatus.FORBIDDEN.value())
 
-        val getResponse = testRestTemplate.getForEntity<UserDto>("/api/user/${userToUpdate.username}")
-        assertThat(getResponse.statusCode).isEqualTo(HttpStatus.OK)
-        val dto = getResponse.body
-        assertThat(dto).isNotNull()
-        val user = userRepository.findByUsername(dto!!.username)!!
-        assertThat(user).isEqualTo(testUser)
+        val getResult = mockMvc.get()
+            .uri("/api/user/{username}", testUser.username)
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+        assertThat(getResult.response.status).isEqualTo(HttpStatus.OK.value())
+        assertThat(getResult.response.contentAsString).isNotNull
+        val updatedUser = userJsonSerializer.parse(getResult.response.contentAsString).`object`
+        assertThat(updatedUser).isNotNull
+        assertThat(updatedUser.username).isEqualTo(testUser.username)
+        assertThat(updatedUser.password).isEqualTo(testUser.passwordHash)
     }
 
     @Test
     @DirtiesContext
+    @WithMockUser(username = "new user impostor", password = "password")
+    fun dontPutUserByNotOwner(){
+        val userToUpdate = UserDto(testUser.username,"fak")
+        val userJson = userJsonSerializer.write(userToUpdate)
+        val result = mockMvc.put()
+            .uri("/api/user/{username}", testUser.username)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(userJson.json)
+            .with(csrf())
+            .exchange()
+        assertThat(result.response.status).isEqualTo(HttpStatus.FORBIDDEN.value())
+
+        val getResult = mockMvc.get()
+            .uri("/api/user/{username}", testUser.username)
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+        assertThat(getResult.response.status).isEqualTo(HttpStatus.OK.value())
+        assertThat(getResult.response.contentAsString).isNotNull
+        val updatedUser = userJsonSerializer.parse(getResult.response.contentAsString).`object`
+        assertThat(updatedUser).isNotNull
+        assertThat(updatedUser.username).isEqualTo(testUser.username)
+        assertThat(updatedUser.password).isEqualTo(testUser.passwordHash)
+    }
+
+    @Test
+    @DirtiesContext
+    @WithMockUser(username = "new user", password = "password")
     fun deleteExistingUser(){
-        val response = testRestTemplate.exchange<Void>("/api/user/${testUser.username}", HttpMethod.DELETE)
-        assertThat(response.statusCode).isEqualTo(HttpStatus.OK)
+        val result = mockMvc.delete()
+            .uri("/api/user/{username}", testUser.username)
+            .with(csrf())
+            .exchange()
+        assertThat(result.response.status).isEqualTo(HttpStatus.OK.value())
 
-        val getResponse = testRestTemplate.getForEntity<UserDto>("/api/user/${testUser.username}")
-        assertThat(getResponse.statusCode).isEqualTo(HttpStatus.NOT_FOUND)
-        val dto = getResponse.body
-        assertThat(dto).isNull()
+        val getResult = mockMvc.get()
+            .uri("/api/user/{username}", testUser.username)
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+        assertThat(getResult.response.status).isEqualTo(HttpStatus.NOT_FOUND.value())
+        assertThat(getResult.response.contentAsString).isEmpty()
     }
 
     @Test
     @DirtiesContext
+    @WithMockUser(username = "new user", password = "password")
     fun dontDeleteNonExistingUser(){
-        val putResponse = testRestTemplate.exchange<Void>("/api/user/fak", HttpMethod.DELETE)
-        assertThat(putResponse.statusCode).isEqualTo(HttpStatus.NOT_FOUND)
+        val wrongName = testUser.username.plus(" impostor")
+        val result = mockMvc.delete()
+            .uri("/api/user/{username}", wrongName)
+            .with(csrf())
+            .exchange()
+        assertThat(result.response.status).isEqualTo(HttpStatus.NOT_FOUND.value())
 
-        val getResponse = testRestTemplate.getForEntity<UserDto>("/api/user/${testUser.username}")
-        assertThat(getResponse.statusCode).isEqualTo(HttpStatus.OK)
-        val dto = getResponse.body
-        assertThat(dto).isNotNull()
+        val getResult = mockMvc.get()
+            .uri("/api/user/{username}", testUser.username)
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+        assertThat(getResult.response.status).isEqualTo(HttpStatus.OK.value())
+        val user = userJsonSerializer.parse(getResult.response.contentAsString).`object`
+        val dto = UserDto(testUser.username,testUser.passwordHash)
+        assertThat(user).isNotNull
+        assertThat(user).isEqualTo(dto)
     }
 }

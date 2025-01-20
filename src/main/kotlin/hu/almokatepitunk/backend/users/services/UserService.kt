@@ -47,7 +47,7 @@ class UserService{
         if(usernameToUpdate != userDto.username) throw UsernameConflictException("The two usernames do not match.")
         if(!checkExistingUser(userDto.username)) throw UsernameNotFoundException("Username not found")
         val user = userRepository.findByUsername(userDto.username)!!
-        val userToUpdate = User(userDto.username,passwordEncoder.encode(userDto.password),user.salt)
+        val userToUpdate = User(user.id,userDto.username,passwordEncoder.encode(userDto.password),user.salt)
         val updatedUser = userRepository.save(userToUpdate)
         val dto = userDto.copy(password = updatedUser.passwordHash)
         return dto
