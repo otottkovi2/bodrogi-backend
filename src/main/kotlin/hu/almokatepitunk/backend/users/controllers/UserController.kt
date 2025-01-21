@@ -30,15 +30,9 @@ class UserController {
     }
 
     @GetMapping("/api/user")
-    fun getAllUsers(): ResponseEntity<List<UserDto>> {
-        val users = userService.getAllUsers()
-        return ResponseEntity.ok(users)
-    }
-
-    @GetMapping("/api/user/{username}")
-    fun getUserByUsername(@PathVariable("username") username: String): ResponseEntity<UserDto> {
+    fun getUser(principal: Principal): ResponseEntity<UserDto> {
         try {
-            val user = userService.getUserByUsername(username)
+            val user = userService.getUserByUsername(principal.name)
             return ResponseEntity.ok(user)
         } catch (e:UsernameNotFoundException) {
             return ResponseEntity.notFound().build()
