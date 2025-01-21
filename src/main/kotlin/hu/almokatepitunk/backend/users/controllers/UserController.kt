@@ -3,10 +3,12 @@ package hu.almokatepitunk.backend.users.controllers
 import hu.almokatepitunk.backend.users.UserDto
 import hu.almokatepitunk.backend.users.services.UserService
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.util.UriComponentsBuilder
+import java.security.Principal
 
 @RestController
 class UserController {
@@ -46,7 +48,9 @@ class UserController {
     }
 
     @PutMapping("/api/user/{username}")
-    fun updateUser(@PathVariable("username") username: String, @RequestBody userDto: UserDto): ResponseEntity<Void> {
+    fun updateUser(@PathVariable("username") username: String, @RequestBody userDto: UserDto, principal: Principal):
+            ResponseEntity<Void> {
+        if(principal.name != username) return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
         try {
             userService.updateUser(username, userDto)
             return ResponseEntity.ok().build()
@@ -61,12 +65,12 @@ class UserController {
     }
 
     @DeleteMapping("/api/user/{username}")
-    fun deleteUserById(@PathVariable("username") usernameToDelete:String): ResponseEntity<String> {
+    fun deleteUserById(@PathVariable("username") usernameToDelete:String, principal: Principal):
+            ResponseEntity<String> {
+        if (principal.name != usernameToDelete) return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
         try {
             val deletedId = userService.deleteUser(usernameToDelete)
             return ResponseEntity.ok(deletedId)
-        } catch (e:UsernameNotFoundException) {
-            return ResponseEntity.notFound().build()
         } catch (e:Exception) {
             return ResponseEntity.internalServerError().build()
         }

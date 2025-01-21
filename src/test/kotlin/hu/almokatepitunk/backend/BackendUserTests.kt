@@ -252,7 +252,28 @@ class BackendUserTests {
             .uri("/api/user/{username}", wrongName)
             .with(csrf())
             .exchange()
-        assertThat(result.response.status).isEqualTo(HttpStatus.NOT_FOUND.value())
+        assertThat(result.response.status).isEqualTo(HttpStatus.FORBIDDEN.value())
+
+        val getResult = mockMvc.get()
+            .uri("/api/user/{username}", testUser.username)
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+        assertThat(getResult.response.status).isEqualTo(HttpStatus.OK.value())
+        val user = userJsonSerializer.parse(getResult.response.contentAsString).`object`
+        val dto = UserDto(testUser.username, testUser.passwordHash)
+        assertThat(user).isNotNull
+        assertThat(user).isEqualTo(dto)
+    }
+
+    @Test
+    @DirtiesContext
+    @WithMockUser(username = "new user impostor", password = "password")
+    fun dontDeleteUserByNonOwner(){
+        val result = mockMvc.delete()
+            .uri("/api/user/{username}", testUser.username)
+            .with(csrf())
+            .exchange()
+        assertThat(result.response.status).isEqualTo(HttpStatus.FORBIDDEN.value())
 
         val getResult = mockMvc.get()
             .uri("/api/user/{username}", testUser.username)
