@@ -28,14 +28,6 @@ class UserService{
         else return savedUser.username
     }
 
-    fun getAllUsers(): List<UserDto> {
-        val users = userRepository.findAll()
-        val dtos = users.map {
-            UserDto(it.username,it.passwordHash)
-        }
-        return dtos
-    }
-
     fun getUserByUsername(username:String): UserDto {
         val possibleUser = userRepository.findByUsername(username) ?:
         throw UsernameNotFoundException("Username not found")
